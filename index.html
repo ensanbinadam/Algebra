@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار تفاعلي</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            direction: rtl;
+        }
+
+        .quiz-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            margin: auto;
+            margin-top: 50px;
+            position: relative;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .stats div {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .question {
+            font-size: 22px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #fffbcc;
+            border-radius: 10px;
+        }
+
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .answer {
+            background-color: #e0e0e0;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .answer:hover {
+            background-color: #d0d0d0;
+        }
+
+        .answer.correct {
+            background-color: #a8f0a1;
+        }
+
+        .answer.wrong {
+            background-color: #f0a1a1;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #2196f3;
+            color: white;
+        }
+
+        button:hover {
+            background-color: #1976d2;
+        }
+
+        #admin-panel {
+            display: none;
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translate(-50%, 0);
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            width: 80%;
+            max-width: 400px;
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        #admin-panel h3 {
+            margin-bottom: 10px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="quiz-container">
+        <div class="stats">
+            <div>السؤال: <span id="question-counter">١</span> / <span id="total-questions">١</span></div>
+            <div>الوقت: <span id="time-left">30</span> ث</div>
+            <div>الدرجات: <span id="score">٠</span></div>
+        </div>
+        <h1 id="main-title">العبارات الجبرية والمعادلات للصف الخامس</h1>
+        <h2 id="sub-title">وقل رب زدني  علما</h2>
+        <div id="question" class="question">...</div>
+        <div id="answers" class="answers"></div>
+        <div class="buttons">
+            <button onclick="restartQuiz()">ابدأ من جديد</button>
+            <button id="pause-button" onclick="togglePause()">إيقاف</button>
+            <button onclick="nextQuestion()">السؤال التالي</button>
+            <button onclick="toggleAdminPanel()">إدارة</button>
+        </div>
+        <div id="admin-panel">
+            <h3>إدارة الاختبار</h3>
+            <label for="title-input">العنوان الرئيسي:</label>
+            <input type="text" id="title-input" style="width: 100%; margin-bottom: 10px;">
+            <label for="subtitle-input">السطر الثاني:</label>
+            <input type="text" id="subtitle-input" style="width: 100%; margin-bottom: 10px;">
+            <button onclick="updateTitles()">تنفيذ</button>
+            <button onclick="toggleAdminPanel()">إغلاق</button>
+        </div>
+    </div>
+    <div class="footer"> تصميم/الذكاء الاصطناعي بالتعاون مع فنون الرياضيات</div>
+
+    <script>
+        const الأسئلة = [
+                {
+                    "السؤال": "ما قيمة ( س ) في المعادلة ( ٢س + ٥ = ١٥)؟",
+                    "الإجابات": [
+                        "س=4",
+                        "س=٥",
+                        "س=٣",
+                        "س=٦"
+                    ],
+                    "الصحيح": 1
+                },
+                {
+                    "السؤال": "ما الناتج عند تبسيط العبارة ( ٣(٢س + ٤) )؟",
+                    "الإجابات": [
+                        "٦س + ١٢",
+                        "٦س + ٤",
+                        "٦س + ٨",
+                        "٦س"
+                    ],
+                    "الصحيح": 0
+                },
+                {
+                    "السؤال": "إذا كانت ( ص = ٣س + ٢ )، فما قيمة ( ص ) إذا كانت ( س = ٤ )؟",
+                    "الإجابات": [
+                        "ص=١٤",
+                        "ص=١٢",
+                        "ص=١٠",
+                        "ص=١٦"
+                    ],
+                    "الصحيح": 0
+                },
+                {
+                    "السؤال": "ما حل المعادلة ( س÷٣ = ٦ )؟",
+                    "الإجابات": [
+                        "س=١٢",
+                        "س=١٥",
+                        "س=١٨",
+                        "س=٩"
+                    ],
+                    "الصحيح": 1
+                },
+                {
+                    "السؤال": "ما قيمة ( س ) إذا كانت ( ٥س - ٣ = ٢٢ )؟",
+                    "الإجابات": [
+                        "س=٥",
+                        "س=٤",
+                        "س=٦",
+                        "س=٧"
+                    ],
+                    "الصحيح": 0
+                },
+                {
+                    "السؤال": "ما المعادلة التي تمثل الجملة: \"مجموع ثلاثة أمثال عدد ومربع العدد يساوي ١٢\"؟",
+                    "الإجابات": [
+                        "٣س + س<sup>2</sup> = ١٢",
+                        "٣س + ٢س<sup>2</sup> = ١٢",
+                        "٢س + س<sup>2</sup> = ١٢",
+                        "٣س + ٤س<sup>2</sup> = ١٢"
+                    ],
+                    "الصحيح": 0
+                },
+                {
+                    "السؤال": "ما قيمة ( س ) في المعادلة ( ٤س - ٧ = ٩ )؟",
+                    "الإجابات": [
+                        "س=٤",
+                        "س=٣",
+                        "س=٥",
+                        "س=٦"
+                    ],
+                    "الصحيح": 0
+                },
+                {
+                    "السؤال": "إذا كانت ( ص = ٢س - ٥ )، فما قيمة ( س ) إذا كانت ( ص = ١١ )؟",
+                    "الإجابات": [
+                        "س=٨",
+                        "س=٩",
+                        "س=7",
+                        "س=٦"
+                    ],
+                    "الصحيح": 0
+                },
+                {
+                    "السؤال": "ما قيمة ( س ) إذا كانت ( ٣س + ١٠ = ٢٥ )؟",
+                    "الإجابات": [
+                        "س=٥",
+                        "س=٤",
+                        "س=٦",
+                        "س=٣"
+                    ],
+                    "الصحيح": 0
+                },
+                {
+                    "السؤال": "ما حل المعادلة ( ٢س - ٣ = ٧ )؟",
+                    "الإجابات": [
+                        "س=٥",
+                        "س=٤",
+                        "س=٦",
+                        "س=٧"
+                    ],
+                    "الصحيح": 0
+                },
+                {
+                    "السؤال": "ما الناتج عند تبسيط العبارة ( ٤(س + ٢) - ٣س )؟",
+                    "الإجابات": [
+                        "س + ٨",
+                        "٥س + ٨",
+                        "٣س + ٨",
+                        "٧س + ٨"
+                    ],
+                    "الصحيح": 0
+                },
+                {
+                    "السؤال": "إذا كانت ( ص = ٤س - ١٢ )، فما قيمة ( ص ) إذا كانت ( س = ٥ )؟",
+                    "الإجابات": [
+                        "ص=٨",
+                        "ص=٧",
+                        "ص=٦",
+                        "ص=١٠"
+                    ],
+                    "الصحيح": 0
+                },
+                {
+                    "السؤال": "ما حل المعادلة ( ٥(س - ١) = ٢٠ )؟",
+                    "الإجابات": [
+                        "س=٥",
+                        "س=٤",
+                        "س=٦",
+                        "س=٧"
+                    ],
+                    "الصحيح": 0
+                },
+                {
+                    "السؤال": "ما قيمة ( س ) إذا كانت ( ٧س + ٢ = ٣٠ )؟",
+                    "الإجابات": [
+                        "س=٤",
+                        "س=٣",
+                        "س=٥",
+                        "س=٦"
+                    ],
+                    "الصحيح": 0
+                },
+                {
+                    "السؤال": "ما المعادلة التي تمثل الجملة: \"ثلاثة أمثال عدد مطروحًا منه ٥ يساوي ١٠\"؟",
+                    "الإجابات": [
+                        "٣س - ٥ = ١٠",
+                        "٢س - ٥ = ١٠",
+                        "٣س + ٥ = ١٠",
+                        "٣س - ١٠ = ٥"
+                    ],
+                    "الصحيح": 0
+                }
+            ]
+
+        let المؤشر = 0;
+        let الدرجات = 0;
+        let المؤقت;
+        let الوقت = 30;
+        let اختار = false;
+        let موقوف = false;
+
+        function تحويل_إلى_الهندية(النص) {
+            return النص.toString().replace(/[0-9]/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[digit]);
+        }
+
+        function تحميل_السؤال() {
+                if (المؤشر >= الأسئلة.length) {
+                    عرض_النتيجة();
+                    return;
+                }
+
+                clearInterval(المؤقت);
+                الوقت = 30;
+                اختار = false;
+                document.getElementById("time-left").textContent = تحويل_إلى_الهندية(الوقت);
+
+                const السؤال = الأسئلة[المؤشر];
+                document.getElementById("question").innerHTML = `<p>${تحويل_إلى_الهندية(السؤال.السؤال)}</p>`;
+
+                const answersContainer = document.getElementById("answers");
+                answersContainer.innerHTML = "";
+                السؤال.الإجابات.forEach((إجابة, index) => {
+                    const button = document.createElement("div");
+                    button.className = "answer";
+                    button.innerHTML = `${تحويل_إلى_الهندية(إجابة)}`; // التغيير هنا
+                    button.onclick = () => تحقق_من_الإجابة(button, index === السؤال.الصحيح);
+                    answersContainer.appendChild(button);
+                });
+
+                document.getElementById("question-counter").textContent = تحويل_إلى_الهندية(المؤشر + 1);
+                document.getElementById("total-questions").textContent = تحويل_إلى_الهندية(الأسئلة.length);
+
+                بدء_المؤقت();
+            }
+
+
+        function تحقق_من_الإجابة(عنصر, صحيح) {
+            if (اختار || موقوف) return;
+            اختار = true;
+            clearInterval(المؤقت);
+
+            if (صحيح) {
+                عنصر.classList.add("correct");
+                الدرجات++;
+                document.getElementById("score").textContent = تحويل_إلى_الهندية(الدرجات);
+            } else {
+                عنصر.classList.add("wrong");
+            }
+
+            setTimeout(nextQuestion, 1000);
+        }
+
+        function بدء_المؤقت() {
+            if (موقوف) return;
+            المؤقت = setInterval(() => {
+                if (موقوف) {
+                    clearInterval(المؤقت);
+                    return;
+                }
+                الوقت--;
+                document.getElementById("time-left").textContent = تحويل_إلى_الهندية(الوقت);
+                if (الوقت <= 0) {
+                    clearInterval(المؤقت);
+                    nextQuestion();
+                }
+            }, 1000);
+        }
+
+        function togglePause() {
+            موقوف = !موقوف;
+            const pauseButton = document.getElementById("pause-button");
+            pauseButton.textContent = موقوف ? "استئناف" : "إيقاف";
+            if (!موقوف) {
+                بدء_المؤقت();
+            }
+        }
+
+        function nextQuestion() {
+            المؤشر++;
+            تحميل_السؤال();
+        }
+
+        function عرض_النتيجة() {
+            document.getElementById("question").innerHTML = `<p>انتهت المسابقة! مجموع نقاطك: ${تحويل_إلى_الهندية(الدرجات)}</p>`;
+            document.getElementById("answers").innerHTML = "";
+        }
+
+        function restartQuiz() {
+            المؤشر = 0;
+            الدرجات = 0;
+            موقوف = false;
+            document.getElementById("pause-button").textContent = "إيقاف";
+            تحميل_السؤال();
+        }
+
+        function toggleAdminPanel() {
+            const panel = document.getElementById("admin-panel");
+            panel.style.display = panel.style.display === "block" ? "none" : "block";
+        }
+
+        function updateTitles() {
+            const title = document.getElementById("title-input").value;
+            const subtitle = document.getElementById("subtitle-input").value;
+            if (title) document.getElementById("main-title").textContent = title;
+            if (subtitle) document.getElementById("sub-title").textContent = subtitle;
+            toggleAdminPanel();
+        }
+
+        restartQuiz();
+    </script>
+</body>
+
+</html>
